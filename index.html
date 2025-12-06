@@ -5,18 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Aibrez Gold - Live Market</title>
     <script>
-      // Suppress Tailwind CDN warning
+      // Robus Tailwind CDN warning suppression
       (function() {
-        const originalWarn = console.warn;
-        console.warn = function(...args) {
-          if (args[0] && typeof args[0] === 'string' && args[0].includes('cdn.tailwindcss.com')) return;
-          originalWarn.apply(console, args);
-        };
+        try {
+          var originalWarn = console.warn;
+          console.warn = function(...args) {
+            // Check for Tailwind CDN warning
+            if (args[0] && typeof args[0] === 'string' && args[0].indexOf('cdn.tailwindcss.com') !== -1) {
+              return;
+            }
+            originalWarn.apply(console, args);
+          };
+        } catch (e) {
+          // Ignore errors in suppression script
+        }
       })();
     </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Dynamic Favicon (New Abstract 'A' Gold Logo) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40' fill='none'><path d='M20 4L4 36H12L20 18L28 36H36L20 4Z' fill='%23fbbf24'/><path d='M10 30H30' stroke='%23fbbf24' stroke-width='2' stroke-opacity='0.5'/></svg>" type="image/svg+xml" />
     <style>
       body {

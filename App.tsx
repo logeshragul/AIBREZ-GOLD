@@ -25,6 +25,47 @@ const AibrezLogo: React.FC<{ className?: string }> = ({ className = "w-8 h-8" })
   </svg>
 );
 
+// Skeleton Components for Instant Loading Feel
+const SkeletonCard = () => (
+  <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm h-32 animate-pulse flex flex-col justify-between">
+    <div className="flex justify-between">
+      <div className="h-3 w-20 bg-slate-200 rounded"></div>
+      <div className="h-4 w-4 bg-slate-200 rounded-full"></div>
+    </div>
+    <div>
+      <div className="h-8 w-32 bg-slate-200 rounded mb-2"></div>
+      <div className="h-3 w-16 bg-slate-200 rounded"></div>
+    </div>
+  </div>
+);
+
+const SkeletonChart = () => (
+  <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 h-full animate-pulse">
+    <div className="flex justify-between items-center mb-6">
+       <div className="space-y-2">
+         <div className="h-5 w-32 bg-slate-200 rounded"></div>
+         <div className="h-3 w-20 bg-slate-200 rounded"></div>
+       </div>
+       <div className="h-6 w-20 bg-slate-200 rounded-full"></div>
+    </div>
+    <div className="h-64 bg-slate-100 rounded-xl w-full"></div>
+  </div>
+);
+
+const SkeletonList = () => (
+  <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 h-full animate-pulse">
+    <div className="flex items-center gap-2 mb-6">
+      <div className="w-8 h-8 bg-slate-200 rounded-lg"></div>
+      <div className="h-5 w-32 bg-slate-200 rounded"></div>
+    </div>
+    <div className="space-y-4">
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} className="h-10 bg-slate-100 rounded-xl w-full"></div>
+      ))}
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.IDLE);
@@ -32,7 +73,9 @@ const App: React.FC = () => {
   const [isStudioOpen, setIsStudioOpen] = useState(false);
 
   const loadData = async () => {
-    setStatus(FetchStatus.LOADING);
+    // Only set loading status if we don't have data yet (to prevent UI flicker on refresh)
+    if (!data) setStatus(FetchStatus.LOADING);
+    
     setError(null);
     try {
       const result = await fetchGoldMarketData();
@@ -43,7 +86,7 @@ const App: React.FC = () => {
       if (err.message?.includes('API key')) {
         setError('Invalid API Configuration. Please check your Gemini API key.');
       } else {
-        setError('Market data currently unavailable. Please try again.');
+        setError('Market data currently unavailable. Please check your connection.');
       }
     }
   };
@@ -64,29 +107,12 @@ const App: React.FC = () => {
     }).format(num);
   };
 
-  // Loading Screen (Light Mode)
-  if (!data && status === FetchStatus.LOADING) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-amber-100/50 via-transparent to-transparent opacity-70"></div>
-        <div className="relative z-10 flex flex-col items-center">
-          <AibrezLogo className="w-24 h-24 mb-6 animate-pulse" />
-          <h1 className="text-3xl font-light text-slate-800 tracking-[0.2em] mb-3">
-            AIBREZ<span className="font-bold text-amber-500">GOLD</span>
-          </h1>
-          <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest mt-4">
-             <div className="w-2 h-2 bg-amber-500 rounded-full animate-ping"></div>
-             Fetching Live Markets
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const isLoadingInitial = status === FetchStatus.LOADING && !data;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       {/* Live Ticker */}
-      {data && <Ticker data={data.ticker} />}
+      {data ? <Ticker data={data.ticker} /> : <div className="h-10 bg-white border-b border-slate-200"></div>}
 
       <div className="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-8 space-y-8">
         
@@ -109,7 +135,7 @@ const App: React.FC = () => {
           
           <div className="flex items-center gap-3">
              {data && (
-                <div className="hidden lg:flex flex-col items-end mr-4">
+                <div className="hidden lg:flex flex-col items-end mr-4 animate-in fade-in">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Last Update</span>
                   <span className="text-xs text-slate-700 font-mono bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">
                     {data.lastUpdated}
@@ -139,7 +165,7 @@ const App: React.FC = () => {
 
         {/* Error Notification */}
         {status === FetchStatus.ERROR && (
-          <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 shadow-sm">
+          <div className="bg-red-50 border border-red-100 rounded-xl p-4 flex items-center gap-3 shadow-sm animate-in slide-in-from-top-2">
             <div className="p-2 bg-red-100 rounded-full">
               <AlertTriangle className="w-5 h-5 text-red-600" />
             </div>
@@ -151,10 +177,17 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {data && (
-          <>
-            {/* Key Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Key Stats Grid - Skeleton or Real Data */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {isLoadingInitial ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : data ? (
+            <>
               <StatsCard 
                 title="Gold 24K (10g)" 
                 value={formatINR(data.current.price10g24k)} 
@@ -183,54 +216,76 @@ const App: React.FC = () => {
                 trend={data.analysis.sentiment === 'Bullish' ? 'up' : data.analysis.sentiment === 'Bearish' ? 'down' : 'neutral'}
                 icon={<Activity className="w-5 h-5" />}
               />
-            </div>
+            </>
+          ) : null}
+        </div>
 
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Left Column (Chart & Tools) */}
-              <div className="lg:col-span-8 space-y-6">
-                
-                {/* Chart Section */}
-                <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
-                     <AibrezLogo className="w-32 h-32 text-amber-500" />
-                  </div>
-                  <div className="flex justify-between items-center mb-6 relative z-10">
-                    <div>
-                      <h3 className="text-slate-800 text-lg font-bold tracking-tight">Price Performance</h3>
-                      <p className="text-slate-500 text-xs mt-1 font-medium">Spot Price History (7 Days)</p>
-                    </div>
-                    <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100 flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
-                      Live Data
-                    </span>
-                  </div>
-                  <MarketChart data={data.history} />
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left Column (Chart & Tools) */}
+          <div className="lg:col-span-8 space-y-6">
+            
+            {/* Chart Section */}
+            {isLoadingInitial ? (
+              <SkeletonChart />
+            ) : data ? (
+              <div className="bg-white border border-slate-200 shadow-sm rounded-2xl p-6 relative overflow-hidden animate-in fade-in">
+                <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none">
+                    <AibrezLogo className="w-32 h-32 text-amber-500" />
                 </div>
+                <div className="flex justify-between items-center mb-6 relative z-10">
+                  <div>
+                    <h3 className="text-slate-800 text-lg font-bold tracking-tight">Price Performance</h3>
+                    <p className="text-slate-500 text-xs mt-1 font-medium">Spot Price History (7 Days)</p>
+                  </div>
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></span>
+                    Live Data
+                  </span>
+                </div>
+                <MarketChart data={data.history} />
+              </div>
+            ) : null}
 
-                {/* Regional & Calc Split */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <RegionalRates rates={data.regional || []} />
-                   <Calculators 
+            {/* Regional & Calc Split */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {isLoadingInitial ? (
+                  <>
+                    <SkeletonList />
+                    <SkeletonList />
+                  </>
+                ) : data ? (
+                  <>
+                    <RegionalRates rates={data.regional || []} />
+                    <Calculators 
                       goldPrice24k={data.current.price10g24k} 
                       goldPrice22k={data.current.price10g22k}
                       silverPriceKg={data.ticker.silverKg}
-                   />
-                </div>
-              </div>
+                    />
+                  </>
+                ) : null}
+            </div>
+          </div>
 
-              {/* Right Column (Bank & Analysis) */}
-              <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* Right Column (Bank & Analysis) */}
+          <div className="lg:col-span-4 flex flex-col gap-6">
+            {isLoadingInitial ? (
+              <>
+                <SkeletonList />
+                <SkeletonList />
+              </>
+            ) : data ? (
+              <>
                 <BankRates 
-                   rates={data.bankRates || []} 
-                   marketPrice10g={data.current.price10g24k} 
+                  rates={data.bankRates || []} 
+                  marketPrice10g={data.current.price10g24k} 
                 />
                 <AnalysisCard analysis={data.analysis} />
-              </div>
-            </div>
-          </>
-        )}
+              </>
+            ) : null}
+          </div>
+        </div>
 
         {/* Minimal Footer */}
         <footer className="text-center pt-16 pb-8 mt-auto border-t border-slate-200">
