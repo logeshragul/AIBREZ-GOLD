@@ -9,7 +9,8 @@ import { Ticker } from './components/Ticker';
 import { RegionalRates } from './components/RegionalRates';
 import { Calculators } from './components/Calculators';
 import { ChatBot } from './components/ChatBot';
-import { RefreshCw, Coins, Activity, AlertTriangle, Zap } from 'lucide-react';
+import { AIStudio } from './components/AIStudio';
+import { RefreshCw, Coins, Activity, AlertTriangle, Zap, Sparkles } from 'lucide-react';
 
 // Modern Abstract 'A' Logo
 const AibrezLogo: React.FC<{ className?: string }> = ({ className = "w-8 h-8" }) => (
@@ -28,6 +29,7 @@ const App: React.FC = () => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [status, setStatus] = useState<FetchStatus>(FetchStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
+  const [isStudioOpen, setIsStudioOpen] = useState(false);
 
   const loadData = async () => {
     setStatus(FetchStatus.LOADING);
@@ -105,22 +107,32 @@ const App: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
              {data && (
-                <div className="hidden md:flex flex-col items-end mr-2">
+                <div className="hidden lg:flex flex-col items-end mr-4">
                   <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Last Update</span>
                   <span className="text-xs text-slate-700 font-mono bg-white px-2 py-0.5 rounded border border-slate-200 shadow-sm">
                     {data.lastUpdated}
                   </span>
                 </div>
              )}
+            
+            {/* AI Studio Button */}
+            <button 
+              onClick={() => setIsStudioOpen(true)}
+              className="group flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white px-4 py-2.5 rounded-xl transition-all duration-300 shadow-lg shadow-amber-500/20 text-sm font-bold"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span className="hidden sm:inline">AI Design Studio</span>
+            </button>
+
             <button 
               onClick={loadData}
               disabled={status === FetchStatus.LOADING}
-              className="group flex items-center gap-2.5 bg-slate-900 hover:bg-amber-500 hover:text-white text-white px-5 py-2.5 rounded-xl transition-all duration-300 disabled:opacity-50 text-sm font-bold shadow-lg shadow-slate-200 hover:shadow-amber-500/20"
+              className="group flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl transition-all duration-300 disabled:opacity-50 text-sm font-bold shadow-lg shadow-slate-200"
             >
               <RefreshCw className={`w-4 h-4 ${status === FetchStatus.LOADING ? 'animate-spin' : 'group-hover:rotate-180 transition-transform duration-500'}`} />
-              <span>{status === FetchStatus.LOADING ? 'Syncing...' : 'Refresh'}</span>
+              <span className="hidden sm:inline">{status === FetchStatus.LOADING ? 'Syncing...' : 'Refresh'}</span>
             </button>
           </div>
         </header>
@@ -234,8 +246,9 @@ const App: React.FC = () => {
         </footer>
       </div>
 
-      {/* Chatbot Popup */}
+      {/* Overlays */}
       <ChatBot />
+      <AIStudio isOpen={isStudioOpen} onClose={() => setIsStudioOpen(false)} />
     </div>
   );
 };

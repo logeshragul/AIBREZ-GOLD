@@ -6,6 +6,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const DASHBOARD_MODEL = "gemini-2.5-flash";
 const CHAT_MODEL = "gemini-3-pro-preview";
+const IMAGE_GEN_MODEL = "gemini-3-pro-image-preview";
+const IMAGE_ANALYZE_MODEL = "gemini-3-pro-preview";
 
 export const fetchGoldMarketData = async (): Promise<DashboardData> => {
   try {
@@ -108,5 +110,57 @@ export const sendChatMessage = async (message: string, history: any[]) => {
   } catch (error) {
     console.error("Chat Error:", error);
     return "I'm having trouble connecting to the server right now. Please try again later.";
+  }
+};
+
+export const generateJewelryDesign = async (prompt: string, aspectRatio: string = "1:1"): Promise<string | null> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: IMAGE_GEN_MODEL,
+      contents: {
+        parts: [
+          { text: `High quality, photorealistic jewelry design: ${prompt}` }
+        ]
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: aspectRatio as any
+        }
+      }
+    });
+
+    // Extract image
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Image Gen Error:", error);
+    throw error;
+  }
+};
+
+export const analyzeJewelryImage = async (base64Data: string, mimeType: string): Promise<string> => {
+  try {
+    const response = await ai.models.generateContent({
+      model: IMAGE_ANALYZE_MODEL,
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: mimeType
+            }
+          },
+          { text: "Analyze this image. If it is jewelry or gold, estimate its karat, style, and potential craftsmanship value. If it is a market chart, analyze the trend. Keep it concise." }
+        ]
+      }
+    });
+    return response.text || "Could not analyze image.";
+  } catch (error) {
+    console.error("Image Analysis Error:", error);
+    throw error;
   }
 };
